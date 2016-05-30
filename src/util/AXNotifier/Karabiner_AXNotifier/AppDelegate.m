@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "AXApplicationObserverManager.h"
+#import "GlobalAXNotifierPreferencesModel.h"
 #import "NotificationKeys.h"
 #import "PreferencesKeys.h"
 #import "PreferencesModel.h"
@@ -40,22 +41,22 @@
       goto send;
     }
   }
-#if 0
-  NSLog(@"tellToServer skip");
-#endif
+  if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+    NSLog(@"tellToServer skipped");
+  }
   return;
 
 send:
   target[@"mtime"] = @((NSUInteger)([[NSDate date] timeIntervalSince1970] * 1000));
-#if 0
-  NSLog(@"%@", target);
-#endif
+  if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+    NSLog(@"tellToServer: %@", target);
+  }
   @try {
     [self.client updateFocusedUIElementInformation:target];
     self.previousSentInformation = target;
   }
   @catch (NSException* exception) {
-    NSLog(@"%@", exception);
+    NSLog(@"Exception: %@", exception);
     self.previousSentInformation = nil;
   }
 }
@@ -214,7 +215,9 @@ send:
     [NSApp terminate:self];
   }
   [axNotifierPreferencesModel log];
-  self.axApplicationObserverManager = [[AXApplicationObserverManager alloc] initWithAXNotifierPreferencesModel:axNotifierPreferencesModel];
+  [GlobalAXNotifierPreferencesModel set:axNotifierPreferencesModel];
+
+  self.axApplicationObserverManager = [AXApplicationObserverManager new];
 }
 
 @end

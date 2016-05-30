@@ -41,6 +41,7 @@
       kAXNotifierDisabledInQtApps : @YES,
       kAXNotifierDisabledInPreview : @YES,
       kAXNotifierDisabledInMicrosoftOffice : @YES,
+      kAXNotifierEnableDebuggingLog : @NO,
       kUsePreparedSettings : @YES,
       kIsMigratedIsOverwriteKeyRepeat : @NO,
       kIsOverrideKeyRepeat : @NO,
@@ -92,10 +93,11 @@
   // axNotifier
   preferencesModel.axNotifier = [AXNotifierPreferencesModel new];
   preferencesModel.axNotifier.useAXNotifier = [[NSUserDefaults standardUserDefaults] boolForKey:kIsAXNotifierEnabled];
-  preferencesModel.axNotifier.disableAXNotifierInJavaApps = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInJavaApps];
-  preferencesModel.axNotifier.disableAXNotifierInQtApps = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInQtApps];
-  preferencesModel.axNotifier.disableAXNotifierInPreview = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInPreview];
-  preferencesModel.axNotifier.disableAXNotifierInMicrosoftOffice = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInMicrosoftOffice];
+  preferencesModel.axNotifier.disabledInJavaApps = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInJavaApps];
+  preferencesModel.axNotifier.disabledInQtApps = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInQtApps];
+  preferencesModel.axNotifier.disabledInPreview = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInPreview];
+  preferencesModel.axNotifier.disabledInMicrosoftOffice = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierDisabledInMicrosoftOffice];
+  preferencesModel.axNotifier.debuggingLogEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:kAXNotifierEnableDebuggingLog];
 }
 
 - (NSString*)savedProfileIdentifier {
@@ -161,10 +163,11 @@
   // ----------------------------------------
   // axNotifier
   [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.useAXNotifier) forKey:kIsAXNotifierEnabled];
-  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disableAXNotifierInJavaApps) forKey:kAXNotifierDisabledInJavaApps];
-  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disableAXNotifierInQtApps) forKey:kAXNotifierDisabledInQtApps];
-  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disableAXNotifierInPreview) forKey:kAXNotifierDisabledInPreview];
-  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disableAXNotifierInMicrosoftOffice) forKey:kAXNotifierDisabledInMicrosoftOffice];
+  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disabledInJavaApps) forKey:kAXNotifierDisabledInJavaApps];
+  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disabledInQtApps) forKey:kAXNotifierDisabledInQtApps];
+  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disabledInPreview) forKey:kAXNotifierDisabledInPreview];
+  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.disabledInMicrosoftOffice) forKey:kAXNotifierDisabledInMicrosoftOffice];
+  [[NSUserDefaults standardUserDefaults] setObject:@(preferencesModel.axNotifier.debuggingLogEnabled) forKey:kAXNotifierEnableDebuggingLog];
 
   // ----------------------------------------
   // refresh local model.

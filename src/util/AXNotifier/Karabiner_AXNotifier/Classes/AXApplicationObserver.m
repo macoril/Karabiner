@@ -1,9 +1,8 @@
 #import "AXApplicationObserver.h"
 #import "AXUtilities.h"
+#import "GlobalAXNotifierPreferencesModel.h"
 #import "NotificationKeys.h"
 #import "PreferencesModel.h"
-
-static NSMutableDictionary* ignoredApps_ = nil;
 
 @interface AXApplicationObserver ()
 
@@ -47,13 +46,6 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
 
 @implementation AXApplicationObserver
 
-+ (void)initialize {
-  static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    ignoredApps_ = [NSMutableDictionary new];
-  });
-}
-
 - (instancetype)initWithRunningApplication:(NSRunningApplication*)runningApplication {
   self = [super init];
 
@@ -85,7 +77,7 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
   }
 }
 
-- (void)observe:(AXNotifierPreferencesModel*)axNotifierPreferencesModel {
+- (void)observe {
   bool observable = YES;
   if (!AXIsProcessTrusted()) {
     observable = NO;
@@ -96,8 +88,10 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
     observable = NO;
   }
 
+  AXNotifierPreferencesModel* axNotifierPreferencesModel = [GlobalAXNotifierPreferencesModel get];
+
   // Java apps will be crashed if observe. (We confirm crash in SQLDeveloper.)
-  if (axNotifierPreferencesModel.disableAXNotifierInJavaApps) {
+  if (axNotifierPreferencesModel.disabledInJavaApps) {
     if ([[[self.runningApplication executableURL] absoluteString] hasSuffix:@"/java"] ||
         [[[self.runningApplication executableURL] absoluteString] hasSuffix:@"/JavaApplicationStub"] ||
         [[[self.runningApplication executableURL] absoluteString] hasSuffix:@"/JavaAppLauncher"] ||
@@ -152,7 +146,7 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
   }
 
   // Qt apps will be crashed if observe.
-  if (axNotifierPreferencesModel.disableAXNotifierInQtApps) {
+  if (axNotifierPreferencesModel.disabledInQtApps) {
     if ([[[self.runningApplication bundleIdentifier] lowercaseString] hasPrefix:@"com.buhldata."] ||
         false) {
       observable = NO;
@@ -161,14 +155,14 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
 
   // Preview.app will be slow when opening large pdf if Preview.app is observed.
   // eg. http://web.mit.edu/rsi/www/pdfs/beamer-tutorial.pdf
-  if (axNotifierPreferencesModel.disableAXNotifierInPreview) {
+  if (axNotifierPreferencesModel.disabledInPreview) {
     if ([[self.runningApplication bundleIdentifier] isEqualToString:@"com.apple.Preview"]) {
       observable = NO;
     }
   }
 
   // Microsoft Excel.app will reset scrolling by scroll wheel if it is observed.
-  if (axNotifierPreferencesModel.disableAXNotifierInMicrosoftOffice) {
+  if (axNotifierPreferencesModel.disabledInMicrosoftOffice) {
     if ([[self.runningApplication bundleIdentifier] isEqualToString:@"com.microsoft.Excel"] ||
         [[self.runningApplication bundleIdentifier] isEqualToString:@"com.microsoft.Powerpoint"] ||
         [[self.runningApplication bundleIdentifier] isEqualToString:@"com.microsoft.Word"] ||
@@ -230,14 +224,10 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
                        kCFRunLoopDefaultMode);
   }
 
-  // Log ignoredApps_
-  {
+  if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
     if (!observable) {
       NSString* path = [[self.runningApplication executableURL] absoluteString];
-      if (!ignoredApps_[path]) {
-        ignoredApps_[path] = @YES;
-        NSLog(@"Ignore app: %@", path);
-      }
+      NSLog(@"Ignore app: %@", path);
     }
   }
 }
@@ -257,9 +247,9 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
         // We ignore this error.
         return YES;
       }
-#if 0
-      NSLog(@"AXObserverAddNotification is failed: error:%d %@", error, self.runningApplication);
-#endif
+      if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+        NSLog(@"AXObserverAddNotification is failed: error:%@ %@", [AXUtilities errorString:error], self.runningApplication);
+      }
       return NO;
     }
 
@@ -274,9 +264,9 @@ observerCallback(AXObserverRef observer, AXUIElementRef element, CFStringRef not
         // We ignore this error.
         return YES;
       }
-#if 0
-      NSLog(@"AXObserverRemoveNotification is failed: error:%d %@", error, self.runningApplication);
-#endif
+      if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+        NSLog(@"AXObserverRemoveNotification is failed: error:%@ %@", [AXUtilities errorString:error], self.runningApplication);
+      }
       return NO;
     }
   }

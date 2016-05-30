@@ -1,6 +1,6 @@
 #import "AXApplicationObserverManager.h"
 #import "AXApplicationObserver.h"
-#import "PreferencesModel.h"
+#import "GlobalAXNotifierPreferencesModel.h"
 #import "weakify.h"
 
 /*
@@ -86,7 +86,6 @@
 
 @interface AXApplicationObserverManager ()
 
-@property AXNotifierPreferencesModel* axNotifierPreferencesModel;
 @property NSMutableDictionary* systemApplicationObservers;
 
 // We need to observe frontmostApplication only because
@@ -131,12 +130,12 @@
           if ([runningApplications count] > 0) {
             @try {
               AXApplicationObserver* observer = [[AXApplicationObserver alloc] initWithRunningApplication:runningApplications[0]];
-              [observer observe:self.axNotifierPreferencesModel];
+              [observer observe];
               self.systemApplicationObservers[bundleIdentifier] = observer;
             } @catch (NSException* e) {
-#if 0
-              NSLog(@"%@", e);
-#endif
+              if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+                NSLog(@"Exception: %@", e);
+              }
             }
           }
         }
@@ -161,17 +160,17 @@
           self.runningApplicationForAXApplicationObserver = nil;
           return;
         }
-#if 0
-        if (self.retryCounter > 0) {
-          NSLog(@"AXApplicationObserverManager creates AXApplicationObserver for %@ (retryCounter:%d)",
-                self.runningApplicationForAXApplicationObserver,
-                self.retryCounter);
+        if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+          if (self.retryCounter > 0) {
+            NSLog(@"AXApplicationObserverManager creates AXApplicationObserver for %@ (retryCounter:%d)",
+                  self.runningApplicationForAXApplicationObserver,
+                  self.retryCounter);
+          }
         }
-#endif
 
         @try {
           self.observer = [[AXApplicationObserver alloc] initWithRunningApplication:self.runningApplicationForAXApplicationObserver];
-          [self.observer observe:self.axNotifierPreferencesModel];
+          [self.observer observe];
           [self.observer observeTitleChangedNotification];
           [self.observer postNotification];
 
@@ -179,9 +178,9 @@
           self.retryCounter = 0;
 
         } @catch (NSException* e) {
-#if 0
-          NSLog(@"%@", e);
-#endif
+          if ([GlobalAXNotifierPreferencesModel debuggingLogEnabled]) {
+            NSLog(@"Exception: %@", e);
+          }
           ++(self.retryCounter);
         }
       }
@@ -205,12 +204,10 @@
   });
 }
 
-- (instancetype)initWithAXNotifierPreferencesModel:(AXNotifierPreferencesModel*)axNotifierPreferencesModel {
+- (instancetype)init {
   self = [super init];
 
   if (self) {
-    _axNotifierPreferencesModel = axNotifierPreferencesModel;
-
     _systemApplicationObservers = [NSMutableDictionary new];
 
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
